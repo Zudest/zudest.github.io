@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Quien Paga?</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --primary-dark: #345c8d;
+            --secondary: #e9ecef;
+            --dark: #343a40;
+            --light: #f8f9fa;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .section {
+            margin-bottom: 2rem;
+        }
+        
+        .step-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--primary-dark);
+        }
+        
+        .step-number {
+            background-color: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 1rem;
+            font-weight: bold;
+        }
+        
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        #paymentInputs, #resultado {
+            display: none;
+        }
+        
+        .payments-list {
+            list-style: none;
+        }
+        
+        .payment-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .person-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 0.75rem;
+        }
+        
+        .error {
+            color: #dc3545;
+            margin-top: 0.5rem;
+        }
+        
+        .result-card {
+            background-color: var(--secondary);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        
+        .result-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .debt-list {
+            margin-top: 1rem;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #d1d3d5;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn-fixed-bottom {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: auto;
+            padding: 0.5rem 1rem;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>¿Quien Paga?</h1>
+        
+        <div class="section" id="totalSection">
+            <div class="step-title">
+                <span class="step-number">1</span>
+                <h2>Divisor de Cuentas</h2>
+            </div>
+            <div class="input-group">
+                <label for="totalMethod">¿Cómo definís el total?</label>
+                <select id="totalMethod">
+                    <option value="direct">Directamente</option>
+                    <option value="sum">Sumo varios valores</option>
+                </select>
+            </div>
+            
+            <div id="directInput" class="input-group">
+                <label for="totalAmount">Total de la cuenta:</label>
+                <input type="number" id="totalAmount" step="0.01" min="0" placeholder="0">
+            </div>
+            
+            <div id="sumInput" style="display: none;">
+                <div class="input-group">
+                    <label for="newValue">Indicá un valor:</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="number" id="newValue" step="0.01" min="0" placeholder="0" style="flex: 1;">
+                        <button type="button" id="addValueBtn" style="width: auto;">Agregar</button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Valores agregados:</label>
+                    <ul id="valuesList" style="list-style: none; padding-left: 0;"></ul>
+                    <p>Total acumulado: <span id="runningTotal">0.00</span></p>
+                </div>
+            </div>
+            
+            <button type="button" id="nextToPeople">Continuar</button>
+            <p id="totalError" class="error"></p>
+        </div>
+        
+        <div class="section" id="peopleSection" style="display: none;">
+            <div class="step-title">
+                <span class="step-number">2</span>
+                <h2>Número de Personas</h2>
+            </div>
+            <div class="input-group">
+                <label for="numPeople">¿Cuántas personas participan?</label>
+                <input type="number" id="numPeople" min="2" value="2">
+            </div>
+            
+            <div class="input-group">
+                <label>¿Querés cargar sus nombres?</label>
+                <div>
+                    <input type="radio" id="useNames" name="identifiers" value="names">
+                    <label for="useNames" style="display: inline;">Sí, usar nombres</label>
+                </div>
+                <div>
+                    <input type="radio" id="useColors" name="identifiers" value="colors" checked>
+                    <label for="useColors" style="display: inline;">No, usar colores</label>
+                </div>
+            </div>
+            
+            <div id="namesInput" style="display: none;"></div>
+            
+            <div class="btn-group">
+                <button type="button" id="backToTotal" class="btn-secondary">Atrás</button>
+                <button type="button" id="nextToPayments">Continuar</button>
+            </div>
+            <p id="peopleError" class="error"></p>
+        </div>
+        
+        <div class="section" id="paymentInputs" style="display: none;">
+            <div class="step-title">
+                <span class="step-number">3</span>
+                <h2>Pagos</h2>
+            </div>
+            <p style="margin-bottom: 1rem;">Indicá cuánto pagó cada persona:</p>
+            
+            <ul class="payments-list" id="paymentsList"></ul>
+            
+            <div class="btn-group">
+                <button type="button" id="backToPeople" class="btn-secondary">Atrás</button>
+                <button type="button" id="calculateBtn">Calcular</button>
+            </div>
+            <p id="paymentsError" class="error"></p>
+        </div>
+        
+        <div class="section" id="resultado" style="display: none;">
+            <div class="step-title">
+                <span class="step-number">4</span>
+                <h2>Resultados</h2>
+            </div>
+            
+            <div class="result-card">
+                <h3>Resumen</h3>
+                <div class="result-item">
+                    <p>Total de la cuenta: <strong id="resultTotal"></strong></p>
+                </div>
+                <div class="result-item">
+                    <p>Cantidad de personas: <strong id="resultPeople"></strong></p>
+                </div>
+                <div class="result-item">
+                    <p>Pago por persona: <strong id="resultPerPerson"></strong></p>
+                </div>
+            </div>
+            
+            <div class="result-card">
+                <h3>Pagos registrados</h3>
+                <div id="registeredPayments"></div>
+            </div>
+            
+            <div class="result-card">
+                <h3>Pagos pendientes</h3>
+                <div id="pendingPayments" class="debt-list"></div>
+            </div>
+            
+            <button type="button" id="resetBtn">Comenzar de nuevo</button>
+        </div>
+
+        <button type="button" id="fixedResetBtn" class="btn-fixed-bottom">
+            Volver al inicio
+        </button>
+    </div>
+
+    <script>
+        // Colores para identificar personas
+        const colores = [
+            {name: "Rojo", color: "#e63946"},
+            {name: "Azul", color: "#4361ee"},
+            {name: "Verde", color: "#2a9d8f"},
+            {name: "Amarillo", color: "#f4a261"},
+            {name: "Naranja", color: "#e76f51"},
+            {name: "Morado", color: "#7209b7"},
+            {name: "Rosa", color: "#f72585"},
+            {name: "Marrón", color: "#774936"},
+            {name: "Negro", color: "#343a40"},
+            {name: "Blanco", color: "#f1faee"},
+            {name: "Gris", color: "#6c757d"},
+            {name: "Celeste", color: "#90e0ef"},
+            {name: "Turquesa", color: "#48cae4"},
+            {name: "Fucsia", color: "#ff006e"},
+            {name: "Lila", color: "#a5a5de"},
+            {name: "Violeta", color: "#9d4edd"},
+            {name: "Beige", color: "#e9d8a6"},
+            {name: "Dorado", color: "#fca311"},
+            {name: "Plateado", color: "#adb5bd"},
+            {name: "Oliva", color: "#606c38"}
+        ];
+
+        // Variables globales
+        let totalAmount = 0;
+        let numPeople = 2;
+        let identificadores = [];
+        let paymentsData = [];
+        let sumValues = [];
+
+        // Referencias a elementos del DOM
+        const totalMethod = document.getElementById('totalMethod');
+        const directInput = document.getElementById('directInput');
+        const sumInput = document.getElementById('sumInput');
+        const newValue = document.getElementById('newValue');
+        const addValueBtn = document.getElementById('addValueBtn');
+        const valuesList = document.getElementById('valuesList');
+        const runningTotal = document.getElementById('runningTotal');
+        const totalAmount_input = document.getElementById('totalAmount');
+        const numPeople_input = document.getElementById('numPeople');
+        const namesInput = document.getElementById('namesInput');
+        const useNames = document.getElementById('useNames');
+        const useColors = document.getElementById('useColors');
+        const paymentsList = document.getElementById('paymentsList');
+        
+        // Navegación y errores
+        const nextToPeople = document.getElementById('nextToPeople');
+        const nextToPayments = document.getElementById('nextToPayments');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const totalError = document.getElementById('totalError');
+        const peopleError = document.getElementById('peopleError');
+        const paymentsError = document.getElementById('paymentsError');
+        const backToTotal = document.getElementById('backToTotal');
+        const backToPeople = document.getElementById('backToPeople');
+        const fixedResetBtn = document.getElementById('fixedResetBtn');
+
+        // Secciones
+        const totalSection = document.getElementById('totalSection');
+        const peopleSection = document.getElementById('peopleSection');
+        const paymentInputs = document.getElementById('paymentInputs');
+        const resultado = document.getElementById('resultado');
+
+        // Resultados
+        const resultTotal = document.getElementById('resultTotal');
+        const resultPeople = document.getElementById('resultPeople');
+        const resultPerPerson = document.getElementById('resultPerPerson');
+        const registeredPayments = document.getElementById('registeredPayments');
+        const pendingPayments = document.getElementById('pendingPayments');
+
+        // Event Listeners
+        totalMethod.addEventListener('change', toggleTotalInput);
+        addValueBtn.addEventListener('click', addValue);
+        nextToPeople.addEventListener('click', goToPeopleSection);
+        nextToPayments.addEventListener('click', goToPaymentsSection);
+        calculateBtn.addEventListener('click', calculateResults);
+        resetBtn.addEventListener('click', resetApp);
+        backToTotal.addEventListener('click', goToTotalSection);
+        backToPeople.addEventListener('click', goToPeopleSection);
+        fixedResetBtn.addEventListener('click', resetApp);
+        useNames.addEventListener('change', toggleNamesInput);
+        useColors.addEventListener('change', toggleNamesInput);
+        numPeople_input.addEventListener('change', updateNamesInput);
+
+        // Funciones
+        function toggleTotalInput() {
+            if (totalMethod.value === 'direct') {
+                directInput.style.display = 'block';
+                sumInput.style.display = 'none';
+            } else {
+                directInput.style.display = 'none';
+                sumInput.style.display = 'block';
+            }
+        }
+
+        function addValue() {
+            const value = parseFloat(newValue.value);
+            if (isNaN(value) || value <0) {
+                alert('Fijate bien, indicá un numero válido');
+                return;
+            }
+            
+            sumValues.push(value);
+            updateValuesList();
+            newValue.value = '';
+            newValue.focus();
+        }
+
+        function updateValuesList() {
+            valuesList.innerHTML = '';
+            let total = 0;
+            
+            sumValues.forEach((value, index) => {
+                total += value;
+                const li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+                li.style.marginBottom = '0.5rem';
+                
+                const valueSpan = document.createElement('span');
+                valueSpan.textContent = `${value.toFixed(2)}`;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = '✕';
+                deleteBtn.style.width = 'auto';
+                deleteBtn.style.padding = '0 0.5rem';
+                deleteBtn.style.backgroundColor = '#dc3545';
+                
+                deleteBtn.onclick = () => {
+                    sumValues.splice(index, 1);
+                    updateValuesList();
+                };
+                
+                li.appendChild(valueSpan);
+                li.appendChild(deleteBtn);
+                valuesList.appendChild(li);
+            });
+            
+            runningTotal.textContent = total.toFixed(2);
+        }
+
+        function goToTotalSection() {
+            totalSection.style.display = 'block';
+            peopleSection.style.display = 'none';
+            paymentInputs.style.display = 'none';
+            resultado.style.display = 'none';
+        }
+
+        function goToPeopleSection() {
+            // Si venimos desde la sección de pagos, no necesitamos validar
+            if (paymentInputs.style.display === 'block') {
+                totalSection.style.display = 'none';
+                peopleSection.style.display = 'block';
+                paymentInputs.style.display = 'none';
+                resultado.style.display = 'none';
+            } else {
+                // Validación si venimos desde la sección de total
+                if (validateTotalSection()) {
+                    totalSection.style.display = 'none';
+                    peopleSection.style.display = 'block';
+                    updateNamesInput();
+                }
+            }
+        }
+
+        function validateTotalSection() {
+            totalError.textContent = '';
+            
+            if (totalMethod.value === 'direct') {
+                totalAmount = parseFloat(totalAmount_input.value);
+                if (isNaN(totalAmount) || totalAmount <= 0) {
+                    totalError.textContent = 'Fijate che, el total tiene que ser mayor a cero';
+                    return false;
+                }
+            } else {
+                if (sumValues.length === 0) {
+                    totalError.textContent = 'Fijate che, agregá un valor por lo menos';
+                    return false;
+                }
+                totalAmount = sumValues.reduce((a, b) => a + b, 0);
+            }
+            
+            return true;
+        }
+
+        function toggleNamesInput() {
+            if (useNames.checked) {
+                namesInput.style.display = 'block';
+            } else {
+                namesInput.style.display = 'none';
+            }
+            updateNamesInput();
+        }
+
+        function updateNamesInput() {
+            namesInput.innerHTML = '';
+            numPeople = parseInt(numPeople_input.value);
+            
+            if (isNaN(numPeople) || numPeople <2) {
+                numPeople = 2;
+                numPeople_input.value = 2;
+            }
+            
+            if (numPeople > 20) {
+                numPeople = 20;
+                numPeople_input.value = 20;
+                alert('El máximo número de personas es 20');
+            }
+            
+            if (useNames.checked) {
+                for (let i = 0; i < numPeople; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'input-group';
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `name${i}`;
+                    label.textContent = `Nombre de la persona ${i + 1}:`;
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.id = `name${i}`;
+                    input.placeholder = `Persona ${i + 1}`;
+                    
+                    div.appendChild(label);
+                    div.appendChild(input);
+                    namesInput.appendChild(div);
+                }
+            }
+        }
+
+        function goToPaymentsSection() {
+            if (validatePeopleSection()) {
+                totalSection.style.display = 'none';
+                peopleSection.style.display = 'none';
+                paymentInputs.style.display = 'block';
+                resultado.style.display = 'none';
+                updatePaymentsList();
+            }
+        }
+
+        function validatePeopleSection() {
+            peopleError.textContent = '';
+            numPeople = parseInt(numPeople_input.value);
+            
+            if (isNaN(numPeople) || numPeople <2) {
+                peopleError.textContent = 'Tiene que haber al menos 2 personas';
+                return false;
+            }
+            
+            if (numPeople > colores.length) {
+                peopleError.textContent = `El máximo número de personas es ${colores.length}`;
+                return false;
+            }
+            
+            // Obtener identificadores (nombres o colores)
+            identificadores = [];
+            if (useNames.checked) {
+                for (let i = 0; i < numPeople; i++) {
+                    const nameInput = document.getElementById(`name${i}`);
+                    let name = nameInput.value.trim();
+                    if (!name) {
+                        name = `Persona ${i + 1}`;
+                    }
+                    identificadores.push({name, color: colores[i].color});
+                }
+            } else {
+                identificadores = colores.slice(0, numPeople);
+            }
+            
+            return true;
+        }
+
+        function updatePaymentsList() {
+            paymentsList.innerHTML = '';
+            paymentsData = [];
+            
+            identificadores.forEach((persona, index) => {
+                const li = document.createElement('li');
+                li.className = 'payment-item';
+                
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'person-color';
+                colorDiv.style.backgroundColor = persona.color;
+                
+                const label = document.createElement('label');
+                label.htmlFor = `payment${index}`;
+                label.style.flex = 1;
+                label.textContent = persona.name;
+                
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.id = `payment${index}`;
+                input.min = '0';
+                input.step = '0.01';
+                input.placeholder = '0';
+                input.style.width = '120px';
+                
+                li.appendChild(colorDiv);
+                li.appendChild(label);
+                li.appendChild(input);
+                paymentsList.appendChild(li);
+                
+                paymentsData.push({...persona, payment: 0});
+            });
+        }
+
+        function calculateResults() {
+            if (validatePayments()) {
+                paymentInputs.style.display = 'none';
+                resultado.style.display = 'block';
+                showResults();
+            }
+        }
+
+        function validatePayments() {
+            paymentsError.textContent = '';
+            let totalPaid = 0;
+            
+            for (let i = 0; i < numPeople; i++) {
+                const paymentInput = document.getElementById(`payment${i}`);
+                const payment = parseFloat(paymentInput.value) || 0;
+                paymentsData[i].payment = payment;
+                totalPaid += payment;
+            }
+            
+            if (Math.abs(totalPaid - totalAmount) > 0.01) {
+                paymentsError.textContent = `La suma de los pagos (${totalPaid.toFixed(2)}) no coincide con el total de la cuenta (${totalAmount.toFixed(2)})`;
+                return false;
+            }
+            
+            return true;
+        }
+
+        function showResults() {
+            const perPersonAmount = totalAmount / numPeople;
+            
+            // Actualizar resumen
+            resultTotal.textContent = `$${totalAmount.toFixed(2)}`;
+            resultPeople.textContent = numPeople;
+            resultPerPerson.textContent = `$${perPersonAmount.toFixed(2)}`;
+            
+            // Mostrar pagos registrados
+            registeredPayments.innerHTML = '';
+            paymentsData.forEach(person => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'person-color';
+                colorDiv.style.backgroundColor = person.color;
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.style.flex = 1;
+                nameSpan.textContent = person.name;
+                
+                const paymentSpan = document.createElement('span');
+                paymentSpan.textContent = `$${person.payment.toFixed(2)}`;
+                
+                div.appendChild(colorDiv);
+                div.appendChild(nameSpan);
+                div.appendChild(paymentSpan);
+                registeredPayments.appendChild(div);
+            });
+            
+            // Calcular y mostrar pagos pendientes
+            const deudas = dividirCuenta(totalAmount, numPeople, paymentsData.map(p => p.payment), paymentsData);
+            pendingPayments.innerHTML = '';
+            
+            if (deudas.length === 0) {
+                const p = document.createElement('p');
+                p.textContent = 'No hay pagos pendientes. Está todo bien.';
+                pendingPayments.appendChild(p);
+            } else {
+                deudas.forEach(deuda => {
+                    const div = document.createElement('div');
+                    div.className = 'result-item';
+                    div.textContent = deuda;
+                    pendingPayments.appendChild(div);
+                });
+            }
+        }
+
+        function dividirCuenta(totalCuenta, numPersonas, pagos, identificadores) {
+            // Calcular cuánto debería pagar cada persona
+            const montoPorPersona = totalCuenta / numPersonas;
+            
+            // Crear una lista para saber cuánto debe o cuánto le deben a cada persona
+            const balance = pagos.map(pago => pago - montoPorPersona);
+            
+            const deudas = [];
+            
+            // Identificar quién debe pagarle a quién
+            for (let i = 0; i < numPersonas; i++) {
+                if (balance[i] <-0.01) {  // Esta persona debe dinero (uso de umbral para evitar errores de redondeo)
+                    for (let j = 0; j < numPersonas; j++) {
+                        if (balance[j] > 0.01 && balance[i] <-0.01) {  // Esta persona debe recibir dinero
+                            const deuda = Math.min(-balance[i], balance[j]);
+                            balance[i] += deuda;
+                            balance[j] -= deuda;
+                            deudas.push(`${identificadores[i].name} le debe $${deuda.toFixed(2)} a ${identificadores[j].name}`);
+                        }
+                    }
+                }
+            }
+            
+            return deudas;
+        }
+
+        function resetApp() {
+            // Reiniciar variables
+            totalAmount = 0;
+            numPeople = 2;
+            identificadores = [];
+            paymentsData = [];
+            sumValues = [];
+            
+            // Reiniciar campos
+            totalAmount_input.value = '';
+            numPeople_input.value = '2';
+            totalMethod.value = 'direct';
+            useColors.checked = true;
+            newValue.value = '';
+            valuesList.innerHTML = '';
+            runningTotal.textContent = '0.00';
+            
+            // Reiniciar errores
+            totalError.textContent = '';
+            peopleError.textContent = '';
+            paymentsError.textContent = '';
+            
+            // Mostrar la primera sección
+            toggleTotalInput();
+            toggleNamesInput();
+            totalSection.style.display = 'block';
+            peopleSection.style.display = 'none';
+            paymentInputs.style.display = 'none';
+            resultado.style.display = 'none';
+        }
+
+        // Inicialización
+        toggleTotalInput();
+        toggleNamesInput();
+    </script>
+</body>
+</html>
