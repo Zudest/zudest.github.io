@@ -9,6 +9,7 @@
             --primary: #4a6fa5;
             --primary-dark: #345c8d;
             --secondary: #e9ecef;
+            --tertiary: #41b95b;
             --dark: #343a40;
             --light: #f8f9fa;
             --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -158,6 +159,14 @@
             background-color: #d1d3d5;
         }
         
+        .btn-tertiary {
+            background-color: var(--tertiary);
+        }
+        
+        .btn-tertiary:hover {
+            background-color: #d1d3d5;
+        }
+
         .btn-sm {
             padding: 0.5rem;
             font-size: 0.9rem;
@@ -171,6 +180,14 @@
             padding: 0.5rem 1rem;
             z-index: 100;
             box-shadow: var(--shadow);
+        }
+        
+        #content-to-share {
+            position: absolute;
+            left: -9999px;
+            height: 1px;
+            width: 1px;
+            overflow: hidden;
         }
         
         @media (max-width: 600px) {
@@ -298,8 +315,13 @@
                 <div id="pendingPayments" class="debt-list"></div>
             </div>
             
-            <button type="button" id="resetBtn">Comenzar de nuevo</button>
+            <div class="btn-group">
+                <button type="button" id="resetBtn">Empezar de nuevo</button>
+                <button type="button" id="whatsappBtn" class="btn-tertiary">Compartir en WhatsApp</button>
+            </div>
         </div>
+
+        <div id="content-to-share"></div>
 
         <button type="button" id="fixedResetBtn" class="btn-fixed-bottom">
             Volver al inicio
@@ -364,6 +386,7 @@
         const backToTotal = document.getElementById('backToTotal');
         const backToPeople = document.getElementById('backToPeople');
         const fixedResetBtn = document.getElementById('fixedResetBtn');
+        const whatsappBtn = document.getElementById('whatsappBtn');
 
         // Secciones
         const totalSection = document.getElementById('totalSection');
@@ -388,6 +411,7 @@
         backToTotal.addEventListener('click', goToTotalSection);
         backToPeople.addEventListener('click', goToPeopleSection);
         fixedResetBtn.addEventListener('click', resetApp);
+        whatsappBtn.addEventListener('click', shareOnWhatsApp);
         useNames.addEventListener('change', toggleNamesInput);
         useColors.addEventListener('change', toggleNamesInput);
         numPeople_input.addEventListener('change', updateNamesInput);
@@ -689,6 +713,10 @@
                     div.textContent = deuda;
                     pendingPayments.appendChild(div);
                 });
+
+                //whatsapp:
+                const container = document.getElementById('content-to-share');
+                container.textContent = deudas;
             }
         }
 
@@ -718,6 +746,21 @@
             return deudas;
         }
 
+        function shareOnWhatsApp() {
+            // Get the text you want to share
+            const text = document.getElementById('content-to-share').innerText;
+            
+            // Encode the text for URL
+            const encodedText = encodeURIComponent(text);
+            
+            // Create the WhatsApp URL
+            const whatsappURL = `https://wa.me/?text=${encodedText}`;
+            
+            // Open in a new tab
+            window.open(whatsappURL, '_blank');
+        }
+
+
         function resetApp() {
             // Reiniciar variables
             totalAmount = 0;
@@ -734,7 +777,11 @@
             newValue.value = '';
             valuesList.innerHTML = '';
             runningTotal.textContent = '0.00';
-            
+
+            //whatsapp:
+            const wp = document.getElementById('content-to-share');
+            wp.textContent = '';
+
             // Reiniciar errores
             totalError.textContent = '';
             peopleError.textContent = '';
