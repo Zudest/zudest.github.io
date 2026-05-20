@@ -1,0 +1,37 @@
+# .NET build output
+bin/
+obj/
+out/
+publish/
+*.user
+*.suo
+*.userprefs
+
+# Rider / VS / VS Code
+.idea/
+.vs/
+.vscode/
+
+# Local secrets / per-env settings (never commit real credentials)
+appsettings.Production.json
+appsettings.Local.json
+*.env
+.env
+.env.*
+!.env.example
+
+# Docker (los archivos de ejemplo *.example.yml sí se commitean)
+docker-compose.yml
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Misc
+*.swp
+.claude/
